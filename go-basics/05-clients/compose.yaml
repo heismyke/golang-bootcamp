@@ -1,0 +1,42 @@
+# The services the exercises connect to. Start them with:
+#   docker compose -f 05-clients/compose.yaml up -d --wait
+# Stop them (and delete their data) with:
+#   docker compose -f 05-clients/compose.yaml down -v
+services:
+  redis:
+    image: redis:7-alpine
+    ports: ["56379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: clients
+      POSTGRES_PASSWORD: clients
+      POSTGRES_DB: clients
+    ports: ["55434:5432"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U clients -d clients"]
+      interval: 2s
+
+  nats:
+    image: nats:2.10-alpine
+    command: ["--jetstream", "--http_port", "8222"]
+    ports: ["54222:4222", "58222:8222"] # 58222 = monitoring UI
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8222/healthz"]
+      interval: 2s
+
+  s3:
+    # SeaweedFS: an S3-compatible object store (works with any S3 client).
+    image: chrislusf/seaweedfs:4.48
+    command: ["server", "-dir=/data", "-s3", "-s3.config=/etc/seaweedfs/s3.json"]
+    volumes:
+      - ./s3.json:/etc/seaweedfs/s3.json:ro
+    ports: ["59000:8333", "59333:9333"] # 59333 = cluster status UI
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:9333/cluster/status"]
+      interval: 2s
+      retries: 30

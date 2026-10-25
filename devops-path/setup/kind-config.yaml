@@ -1,0 +1,19 @@
+# kind cluster for Level 5:
+#   kind create cluster --name devops --config setup/kind-config.yaml
+# Port 80 inside the cluster (ingress-nginx) is reachable at localhost:8091.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+  - role: control-plane
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "ingress-ready=true"
+    extraPortMappings:
+      - containerPort: 80
+        hostPort: 8091
+        protocol: TCP
+  - role: worker
+  - role: worker

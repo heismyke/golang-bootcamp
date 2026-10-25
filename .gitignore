@@ -1,0 +1,9 @@
+# Go build and test output
+*.test
+*.out
+*.exe
+/bin/
+.env
+.vscode/
+.idea/
+.DS_Store
